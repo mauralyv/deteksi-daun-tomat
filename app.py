@@ -46,7 +46,7 @@ with st.spinner("🧠 Menginisialisasi model AI..."):
     model = load_model()
 
 # ==============================================================================
-# KELAS YANG DIDETEKSI (SESUAI COLAB)
+# KELAS YANG DIDETEKSI
 # ==============================================================================
 class_names = ['healthy', 'yellow_leaf', 'late_blight', 'leaf_mold']
 
@@ -89,14 +89,10 @@ with st.sidebar:
 # FUNGSI PREPROCESSING & PREDIKSI
 # ==============================================================================
 def predict_tomato_disease(img_array, model, img_size=128):
-    # Resize dan normalisasi
     img_resized = cv2.resize(img_array, (img_size, img_size))
     img_normalized = img_resized.astype(np.float32) / 255.0
-    
-    # Tambah batch dimension
     input_data = np.expand_dims(img_normalized, axis=0)
     
-    # Prediksi
     preds = model.predict(input_data)
     pred_class_idx = np.argmax(preds[0])
     pred_label = class_names[pred_class_idx]
@@ -139,11 +135,9 @@ if uploaded_file is not None:
             confidence = result["confidence"]
             all_probs = result["all_probs"]
             
-            # ========== HASIL DIAGNOSA ==========
             st.markdown("---")
             st.subheader("📊 Hasil Diagnosa")
             
-            # Metrics
             col_m1, col_m2 = st.columns(2)
             with col_m1:
                 if pred_label == 'healthy':
@@ -153,14 +147,13 @@ if uploaded_file is not None:
             with col_m2:
                 st.metric(label="Tingkat Keyakinan", value=f"{confidence:.1f}%")
             
-            # Banner
             if pred_label == 'healthy':
                 st.success(f"✅ **Hasil:** Tanaman dinyatakan **SEHAT**. Tidak diperlukan tindakan khusus.")
             else:
                 st.error(f"⚠️ **Hasil:** Tanaman terdeteksi **{class_display_names[pred_label]}**")
                 st.info(f"💡 **Rekomendasi:** {class_info[pred_label]}. Segera lakukan tindakan pengendalian.")
             
-            # ========== GRAFIK PROBABILITAS ==========
+            # ========== GRAFIK PROBABILITAS (DIPERBAIKI) ==========
             st.write("")
             st.write("**📈 Probabilitas per Kelas:**")
             
@@ -168,20 +161,14 @@ if uploaded_file is not None:
                 prob = all_probs[idx] * 100
                 display_name = class_display_names[name]
                 
-                # Warna bar
-                if name == 'healthy':
-                    bar_color = "#2ecc71"
-                else:
-                    bar_color = "#e74c3c"
-                
                 st.markdown(f"🔹 {display_name}: {prob:.1f}%")
-                st.progress(all_probs[idx], text=f"{prob:.1f}%")
+                # PERBAIKAN: konversi ke integer
+                st.progress(int(prob), text=f"{prob:.1f}%")
             
-            # ========== VISUALISASI EKSTRA ==========
+            # ========== VISUALISASI PREPROCESSING ==========
             st.markdown("---")
             st.subheader("🔬 Visualisasi Hasil Preprocessing")
             
-            # Tampilkan hasil preprocessing sederhana
             gray = cv2.cvtColor(result["img_resized"], cv2.COLOR_BGR2GRAY)
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
             
@@ -200,6 +187,6 @@ if uploaded_file is not None:
 # ==============================================================================
 st.markdown("---")
 st.markdown(
-    "<center><small>🍅 Deteksi Penyakit Daun Tomat | MobileNetV2 Transfer Learning | Dibuat untuk Proyek Pengolahan Citra</small></center>",
+    "<center><small>🍅 Deteksi Penyakit Daun Tomat | MobileNetV2 Transfer Learning</small></center>",
     unsafe_allow_html=True
 )
