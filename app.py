@@ -73,6 +73,42 @@ class_info = {
     'leaf_mold': '🌫️ Bercak abu-abu seperti jamur'
 }
 
+# ==============================================================================
+# REKOMENDASI PENANGANAN PER PENYAKIT
+# ==============================================================================
+rekomendasi = {
+    'yellow_leaf': """
+    🛠️ **Rekomendasi Penanganan Yellow Leaf Curl Virus:**
+    - Gunakan **mulsa plastik perak reflektif** di bedengan tanaman untuk membantu mendistraksi dan mengusir kutu kebul (whitefly) agar tidak hinggap di daun tomat muda.
+    - Lakukan **rotasi tanaman** dan hindari menanam tomat di lahan yang sama secara terus-menerus.
+    - Segera **cabut dan bakar** tanaman yang terinfeksi parah untuk mencegah penyebaran.
+    """,
+    
+    'late_blight': """
+    🛠️ **Rekomendasi Penanganan Late Blight:**
+    - Lakukan **pemangkasan (pruning)** pada daun bagian bawah yang terkena infeksi.
+    - Lakukan **penyemprotan preventif** menggunakan fungisida berbahan aktif **tembaga oksida**.
+    - Jaga sirkulasi udara dengan tidak menanam terlalu rapat.
+    - Hindari penyiraman daun (lebih baik siram langsung ke tanah).
+    """,
+    
+    'leaf_mold': """
+    🛠️ **Rekomendasi Penanganan Leaf Mold:**
+    - **Bersihkan dan bakar** sisa-sisa tanaman yang terinfeksi setelah panen agar spora tidak bertahan.
+    - Kurangi kelembaban dengan meningkatkan sirkulasi udara di sekitar tanaman.
+    - Gunakan varietas tomat yang tahan terhadap Leaf Mold.
+    - Lakukan **rotasi tanaman** minimal 2-3 tahun.
+    """,
+    
+    'healthy': """
+    ✅ **Tips Perawatan Tanaman Sehat:**
+    - Lakukan penyiraman secara teratur (pagi atau sore hari).
+    - Berikan pupuk sesuai kebutuhan (NPK seimbang).
+    - Pantau secara rutin tanda-tanda awal penyakit.
+    - Jaga kebersihan lahan dari gulma.
+    """
+}
+
 IMG_SIZE = 128
 
 # ==============================================================================
@@ -156,11 +192,20 @@ if uploaded_file is not None:
             with col_m2:
                 st.metric(label="Tingkat Keyakinan", value=f"{confidence:.1f}%")
             
+            # ========== HASIL & REKOMENDASI ==========
             if pred_label == 'healthy':
                 st.success(f"✅ **Hasil:** Tanaman dinyatakan **SEHAT**. Tidak diperlukan tindakan khusus.")
+                st.info(rekomendasi['healthy'])
             else:
                 st.error(f"⚠️ **Hasil:** Tanaman terdeteksi **{class_display_names[pred_label]}**")
-                st.info(f"💡 **Rekomendasi:** {class_info[pred_label]}. Segera lakukan tindakan pengendalian.")
+                
+                # Tampilkan rekomendasi penanganan
+                if pred_label == 'yellow_leaf':
+                    st.info(rekomendasi['yellow_leaf'])
+                elif pred_label == 'late_blight':
+                    st.info(rekomendasi['late_blight'])
+                elif pred_label == 'leaf_mold':
+                    st.info(rekomendasi['leaf_mold'])
             
             # ========== GRAFIK PROBABILITAS ==========
             st.write("")
@@ -172,9 +217,6 @@ if uploaded_file is not None:
                 
                 st.markdown(f"🔹 {display_name}: {prob:.1f}%")
                 st.progress(int(prob), text=f"{prob:.1f}%")
-            
-            # ========== VISUALISASI PREPROCESSING (jika mau) ==========
-            # Hapus bagian ini jika tidak ingin visualisasi
 
 # ==============================================================================
 # FOOTER
