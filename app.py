@@ -19,10 +19,12 @@ st.markdown("""
     <style>
     .main-title { font-size:42px !important; font-weight: bold; color: #E74C3C; text-align: center; margin-bottom: 0px; }
     .subtitle { font-size:18px !important; text-align: center; color: #555555; margin-bottom: 30px; }
+    .stButton > button { background-color: #E74C3C; color: white; border-radius: 10px; padding: 10px 24px; }
+    .stButton > button:hover { background-color: #c0392b; color: white; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<p class="main-title">🍅 Deteksi Daun Tomat</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">🍅 Deteksi Penyakit Daun Tomat</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -32,31 +34,37 @@ st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbas
 def load_model():
     model_path = 'BARU_model_daun_tomat_82.h5'
     
-    # Cek apakah model sudah ada di lokal
     if not os.path.exists(model_path):
-        with st.spinner("📥 Mengunduh model AI (26MB) dari Google Drive, mohon tunggu 1-2 menit..."):
-            # File ID dari link Google Drive Anda
+        with st.spinner("📥 Mengunduh model AI (25MB), mohon tunggu..."):
             file_id = "1E5tsGy0M1kQr9rgvZbuloxPWRWpKFE4i"
             url = f"https://drive.google.com/uc?id={file_id}"
             gdown.download(url, model_path, quiet=False)
     
     return tf.keras.models.load_model(model_path)
 
-# Load model
-with st.spinner("🧠 Sedang menginisialisasi model AI..."):
+with st.spinner("🧠 Menginisialisasi model AI..."):
     model = load_model()
 
-# Kelas (sama persis dengan Colab)
-class_names = ['healthy', 'early_blight', 'late_blight', 'leaf_mold']
-IMG_SIZE = 128
+# ==============================================================================
+# KELAS YANG DIDETEKSI (SESUAI COLAB)
+# ==============================================================================
+class_names = ['healthy', 'yellow_leaf', 'late_blight', 'leaf_mold']
 
-# Label yang lebih rapi untuk tampilan
 class_display_names = {
     'healthy': '🍅 HEALTHY (Sehat)',
-    'early_blight': '🟤 Early Blight (Bercak Dini)',
-    'late_blight': '⚫ Late Blight (Bercak Lambat)',
-    'leaf_mold': '🌫️ Leaf Mold (Kapang Daun)'
+    'yellow_leaf': '🟡 Yellow Leaf Curl Virus (Daun Menguning)',
+    'late_blight': '⚫ Late Blight (Bercak Coklat)',
+    'leaf_mold': '🌫️ Leaf Mold (Jamur Daun)'
 }
+
+class_info = {
+    'healthy': '🟢 Daun sehat tanpa bercak',
+    'yellow_leaf': '🟡 Daun menguning dan menggulung',
+    'late_blight': '⚫ Bercak besar berwarna coklat kehitaman',
+    'leaf_mold': '🌫️ Bercak abu-abu seperti jamur'
+}
+
+IMG_SIZE = 128
 
 # ==============================================================================
 # SIDEBAR
@@ -70,28 +78,22 @@ with st.sidebar:
     
     st.markdown("---")
     st.subheader("🌿 Kelas yang Didukung:")
-    class_info = {
-        'healthy': '🟢 Daun sehat tanpa bercak',
-        'early_blight': '🟤 Bercak coklat kecil pada daun',
-        'late_blight': '⚫ Bercak besar berwarna coklat kehitaman',
-        'leaf_mold': '🌫️ Bercak abu-abu seperti jamur'
-    }
     for name in class_names:
         st.markdown(f"- **{class_display_names[name]}**")
         st.caption(f"  {class_info[name]}")
+    
+    st.markdown("---")
+    st.caption("💡 **Tips:** Pastikan gambar daun terlihat jelas dan pencahayaan cukup.")
 
 # ==============================================================================
-# FUNGSI PREPROCESSING (SAMA PERSIS DENGAN COLAB)
+# FUNGSI PREPROCESSING & PREDIKSI
 # ==============================================================================
 def predict_tomato_disease(img_array, model, img_size=128):
-    """
-    Fungsi prediksi sama persis dengan yang di Colab
-    """
-    # Prapemrosesan: resize dan normalisasi
+    # Resize dan normalisasi
     img_resized = cv2.resize(img_array, (img_size, img_size))
     img_normalized = img_resized.astype(np.float32) / 255.0
     
-    # Tambah dimensi batch
+    # Tambah batch dimension
     input_data = np.expand_dims(img_normalized, axis=0)
     
     # Prediksi
@@ -118,10 +120,7 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
     col1, col2 = st.columns(2)
     
-    # Buka gambar
     image = Image.open(uploaded_file)
-    
-    # Konversi ke BGR (OpenCV format) karena model dilatih dengan BGR
     img_array = np.array(image)
     img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     
@@ -131,54 +130,76 @@ if uploaded_file is not None:
         
     with col2:
         st.subheader("⚙️ Kontrol Analisis")
-        st.write("Klik tombol di bawah ini untuk mendeteksi penyakit:")
         run_prediction = st.button("🔍 Mulai Deteksi Penyakit", type="primary", use_container_width=True)
     
     if run_prediction:
         with st.spinner("🤖 AI sedang menganalisis gambar..."):
-            
-            # Prediksi
             result = predict_tomato_disease(img_bgr, model, IMG_SIZE)
             pred_label = result["pred_label"]
             confidence = result["confidence"]
             all_probs = result["all_probs"]
             
-            # ========== TAMPILKAN HASIL ==========
-            st.write("---")
+            # ========== HASIL DIAGNOSA ==========
+            st.markdown("---")
             st.subheader("📊 Hasil Diagnosa")
             
-            # Metrik
-            m_col1, m_col2 = st.columns(2)
-            with m_col1:
+            # Metrics
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
                 if pred_label == 'healthy':
                     st.metric(label="Status Daun", value="✅ SEHAT", delta="Normal")
                 else:
                     st.metric(label="Status Daun", value="⚠️ TERINFEKSI", delta="Sakit", delta_color="inverse")
-            with m_col2:
-                st.metric(label="Keyakinan", value=f"{confidence:.1f}%")
+            with col_m2:
+                st.metric(label="Tingkat Keyakinan", value=f"{confidence:.1f}%")
             
-            # Banner Status
+            # Banner
             if pred_label == 'healthy':
-                st.success(f"✅ **Hasil:** Tanaman dinyatakan **SEHAT**")
+                st.success(f"✅ **Hasil:** Tanaman dinyatakan **SEHAT**. Tidak diperlukan tindakan khusus.")
             else:
                 st.error(f"⚠️ **Hasil:** Tanaman terdeteksi **{class_display_names[pred_label]}**")
+                st.info(f"💡 **Rekomendasi:** {class_info[pred_label]}. Segera lakukan tindakan pengendalian.")
             
             # ========== GRAFIK PROBABILITAS ==========
             st.write("")
             st.write("**📈 Probabilitas per Kelas:**")
             
             for idx, name in enumerate(class_names):
-                prob_percentage = all_probs[idx] * 100
+                prob = all_probs[idx] * 100
                 display_name = class_display_names[name]
                 
-                st.markdown(f"🔹 {display_name}: {prob_percentage:.1f}%")
-                st.progress(float(all_probs[idx]), text=f"{prob_percentage:.1f}%")
+                # Warna bar
+                if name == 'healthy':
+                    bar_color = "#2ecc71"
+                else:
+                    bar_color = "#e74c3c"
+                
+                st.markdown(f"🔹 {display_name}: {prob:.1f}%")
+                st.progress(all_probs[idx], text=f"{prob:.1f}%")
+            
+            # ========== VISUALISASI EKSTRA ==========
+            st.markdown("---")
+            st.subheader("🔬 Visualisasi Hasil Preprocessing")
+            
+            # Tampilkan hasil preprocessing sederhana
+            gray = cv2.cvtColor(result["img_resized"], cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            
+            col_v1, col_v2, col_v3 = st.columns(3)
+            with col_v1:
+                st.image(image, caption="Original", use_container_width=True)
+            with col_v2:
+                st.image(result["img_resized"], caption="Resized (128x128)", use_container_width=True)
+            with col_v3:
+                st.image(thresh, caption="Deteksi Bercak (Otsu)", use_container_width=True, clamp=True)
+            
+            st.caption("💡 **Interpretasi:** Area putih pada gambar 'Deteksi Bercak' menunjukkan potensi area penyakit.")
 
 # ==============================================================================
 # FOOTER
 # ==============================================================================
 st.markdown("---")
 st.markdown(
-    "<center><small>🍅 Deteksi Penyakit Daun Tomat | CNN Transfer Learning</small></center>",
+    "<center><small>🍅 Deteksi Penyakit Daun Tomat | MobileNetV2 Transfer Learning | Dibuat untuk Proyek Pengolahan Citra</small></center>",
     unsafe_allow_html=True
 )
