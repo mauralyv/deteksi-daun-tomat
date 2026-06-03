@@ -1,128 +1,186 @@
 import streamlit as st
-from PIL import Image
+import tensorflow as tf
+import cv2
 import numpy as np
-import time
+from PIL import Image
 
-# ===== CONFIG =====
-st.set_page_config(page_title="Deteksi Daun Tomat", layout="wide")
-
-# ===== TITLE =====
-st.title("🌿 Deteksi Penyakit Daun Tomat")
-st.write("Upload gambar daun untuk mendeteksi penyakit dan melihat tahapan pemrosesan citra")
-
-# ===== SIDEBAR =====
-st.sidebar.header("📤 Upload Gambar")
-file = st.sidebar.file_uploader(
-    "Pilih gambar",
-    type=["jpg", "png", "jpeg", "webp"]
+# ==============================================================================
+# KONFIGURASI HALAMAN
+# ==============================================================================
+st.set_page_config(
+    page_title="Tomato Leaf Disease Detector", 
+    page_icon="🍅", 
+    layout="wide"
 )
 
-# ===== MAIN =====
-if file is not None:
-    image = Image.open(file)
+st.markdown("""
+    <style>
+    .main-title { font-size:42px !important; font-weight: bold; color: #E74C3C; text-align: center; margin-bottom: 0px; }
+    .subtitle { font-size:18px !important; text-align: center; color: #555555; margin-bottom: 30px; }
+    </style>
+""", unsafe_allow_html=True)
 
-    # ===== LOADING =====
-    with st.sidebar:
-        st.write("⏳ Gambar berhasil diupload")
-        progress = st.progress(0)
-        for i in range(100):
-            time.sleep(0.005)
-            progress.progress(i + 1)
-        st.success("Siap diproses!")
+st.markdown('<p class="main-title">🍅 Tomato Shield AI</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
 
-    # ===== LAYOUT =====
-    col_img, col_info = st.columns([2, 1])
+# ==============================================================================
+# LOAD MODEL (SAMA PERSIS DENGAN COLAB)
+# ==============================================================================
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model('model_daun_tomat_82.h5')
 
-    # =========================
-    # ===== KIRI: GAMBAR =====
-    # =========================
-    with col_img:
-        st.subheader("📷 Visualisasi Citra")
+with st.spinner("🧠 Sedang menginisialisasi model AI..."):
+    model = load_model()
 
-        tab1, tab2 = st.tabs(["Original", "Processed (Pipeline)"])
+# Kelas (sama persis dengan Colab)
+class_names = ['healthy', 'early_blight', 'late_blight', 'leaf_mold']
+IMG_SIZE = 128
 
-        # ===== ORIGINAL =====
-        with tab1:
-            st.image(image, width="stretch")
+# Label yang lebih rapi untuk tampilan
+class_display_names = {
+    'healthy': '🍅 HEALTHY (Sehat)',
+    'early_blight': '🟤 Early Blight (Bercak Dini)',
+    'late_blight': '⚫ Late Blight (Bercak Lambat)',
+    'leaf_mold': '🌫️ Leaf Mold (Kapang Daun)'
+}
 
-        # ===== PROCESSED PIPELINE =====
-        with tab2:
-            st.write("🔬 Tahapan Pemrosesan Citra")
+class_colors = {
+    'healthy': 'green',
+    'early_blight': '#E67E22',
+    'late_blight': '#8B4513',
+    'leaf_mold': '#A9A9A9'
+}
 
-            # ===== STEP 1: RESIZE =====
-            img = image.resize((224, 224))
-            st.subheader("1️⃣ Resize")
-            st.caption("Mengubah ukuran gambar menjadi 224x224 agar sesuai input model")
-            st.image(img, width="stretch")
+# ==============================================================================
+# SIDEBAR
+# ==============================================================================
+with st.sidebar:
+    st.header("📌 Informasi Sistem")
+    st.markdown("""
+    Aplikasi ini menggunakan arsitektur **MobileNetV2 (Transfer Learning)** 
+    dengan prapemrosesan **Color-Preserved** untuk mendeteksi 4 kondisi daun tomat.
+    """)
+    st.write(f"**Akurasi Pengujian:** 82.00%")
+    st.write(f"**Resolusi Input:** {IMG_SIZE}x{IMG_SIZE} Piksel")
+    
+    st.markdown("---")
+    st.subheader("🌿 Kelas yang Didukung:")
+    class_info = {
+        'healthy': '🟢 Daun sehat tanpa bercak',
+        'early_blight': '🟤 Bercak coklat kecil pada daun',
+        'late_blight': '⚫ Bercak besar berwarna coklat kehitaman',
+        'leaf_mold': '🌫️ Bercak abu-abu seperti jamur'
+    }
+    for name in class_names:
+        st.markdown(f"- **{class_display_names[name]}**")
+        st.caption(f"  {class_info[name]}")
 
-            # ===== STEP 2: GRAYSCALE =====
-            img_np = np.array(img)
-            gray = np.mean(img_np, axis=2)
-            st.subheader("2️⃣ Grayscale")
-            st.caption("Mengubah citra menjadi skala abu-abu untuk memudahkan analisis")
-            st.image(gray, width="stretch", clamp=True)
+# ==============================================================================
+# FUNGSI PREPROCESSING (SAMA PERSIS DENGAN COLAB)
+# ==============================================================================
+def predict_tomato_disease(img_array, model, img_size=128):
+    """
+    Fungsi prediksi sama persis dengan yang di Colab
+    """
+    # Prapemrosesan: resize dan normalisasi
+    img_resized = cv2.resize(img_array, (img_size, img_size))
+    img_normalized = img_resized.astype(np.float32) / 255.0
+    
+    # Tambah dimensi batch
+    input_data = np.expand_dims(img_normalized, axis=0)
+    
+    # Prediksi
+    preds = model.predict(input_data)
+    pred_class_idx = np.argmax(preds[0])
+    pred_label = class_names[pred_class_idx]
+    confidence = preds[0][pred_class_idx] * 100
+    
+    return {
+        "pred_label": pred_label,
+        "confidence": confidence,
+        "all_probs": preds[0],
+        "img_resized": img_resized
+    }
 
-            # ===== STEP 3: ENHANCEMENT =====
-            enhanced = np.clip(gray * 1.5, 0, 255)
-            st.subheader("3️⃣ Enhancement (Contrast)")
-            st.caption("Meningkatkan kontras citra agar fitur lebih terlihat")
-            st.image(enhanced, width="stretch", clamp=True)
+# ==============================================================================
+# UPLOAD GAMBAR
+# ==============================================================================
+uploaded_file = st.file_uploader(
+    "📤 Unggah foto sampel daun tomat Anda di bawah ini:", 
+    type=["jpg", "jpeg", "png"]
+)
 
-            # ===== STEP 4: SEGMENTATION =====
-            threshold = enhanced > 120
-            segmented = threshold * 255
-            st.subheader("4️⃣ Segmentation")
-            st.caption("Memisahkan objek daun dari background menggunakan threshold")
-            st.image(segmented, width="stretch", clamp=True)
-
-            # ===== STEP 5: MORPHOLOGY =====
-            morph = segmented.copy()
-            morph[morph < 255] = 0
-            st.subheader("5️⃣ Morphology")
-            st.caption("Menghilangkan noise untuk memperjelas objek")
-            st.image(morph, width="stretch", clamp=True)
-
-    # =========================
-    # ===== KANAN: INFO =====
-    # =========================
-    with col_info:
-        st.subheader("📊 Hasil Deteksi")
-
-        if st.button("🔍 Deteksi Penyakit"):
-            with st.spinner("Menganalisis gambar..."):
-                time.sleep(1)
-
-                # ===== HASIL DUMMY =====
-                hasil = "Early Blight"
-                conf = 0.92
-
-            # ===== OUTPUT =====
-            if "Healthy" in hasil:
-                st.success(f"✅ {hasil}")
+if uploaded_file is not None:
+    col1, col2 = st.columns(2)
+    
+    # Buka gambar
+    image = Image.open(uploaded_file)
+    
+    # Konversi ke BGR (OpenCV format) karena model dilatih dengan BGR
+    img_array = np.array(image)
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+    
+    with col1:
+        st.subheader("📸 Citra Input")
+        st.image(image, caption="Gambar Daun Asli", use_container_width=True)
+        
+    with col2:
+        st.subheader("⚙️ Kontrol Analisis")
+        st.write("Klik tombol di bawah ini untuk mengaktifkan ekstraksi fitur jaringan saraf konvensional:")
+        run_prediction = st.button("🔍 Mulai Deteksi Penyakit", type="primary", use_container_width=True)
+    
+    if run_prediction:
+        with st.spinner("🤖 AI sedang memindai pola tekstur dan morfologi bercak daun..."):
+            
+            # Prediksi
+            result = predict_tomato_disease(img_bgr, model, IMG_SIZE)
+            pred_label = result["pred_label"]
+            confidence = result["confidence"]
+            all_probs = result["all_probs"]
+            
+            # ========== TAMPILKAN HASIL ==========
+            st.write("---")
+            st.subheader("📊 Laporan Hasil Diagnosa")
+            
+            # Metrik
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                if pred_label == 'healthy':
+                    st.metric(label="Status Kesehatan Daun", value="✅ SEHAT", delta="Normal")
+                else:
+                    st.metric(label="Status Kesehatan Daun", value="⚠️ TERINFEKSI", delta="- Sakit", delta_color="inverse")
+            with m_col2:
+                st.metric(label="Tingkat Keyakinan", value=f"{confidence:.2f}%")
+            
+            # Banner Status
+            if pred_label == 'healthy':
+                st.success(f"**Hasil Analisis:** Tanaman dinyatakan **SEHAT**. Tidak diperlukan tindakan penanganan khusus.")
             else:
-                st.error(f"⚠️ {hasil}")
+                st.error(f"**Hasil Analisis:** Tanaman terdeteksi mengidap **{class_display_names[pred_label]}**. Segera lakukan tindakan pengendalian!")
+            
+            # ========== GRAFIK PROBABILITAS ==========
+            st.write("")
+            st.write("**📈 Distribusi Keyakinan Model untuk Tiap Kelas:**")
+            
+            for idx, name in enumerate(class_names):
+                prob_percentage = all_probs[idx] * 100
+                display_name = class_display_names[name]
+                
+                # Warna bar
+                if name == 'healthy':
+                    bar_color = "#2ecc71"
+                else:
+                    bar_color = "#e74c3c"
+                
+                st.markdown(f"🔹 {display_name}: {prob_percentage:.2f}%")
+                st.progress(float(all_probs[idx]), text=f"{prob_percentage:.1f}%")
 
-            st.metric("Confidence", f"{conf*100:.2f}%")
-
-            # ===== INFORMASI =====
-            st.markdown("### 📌 Informasi Penyakit")
-            st.write("""
-            **Early Blight** adalah penyakit yang disebabkan oleh jamur *Alternaria solani*.
-
-            **Gejala:**
-            - Bercak coklat pada daun
-            - Daun menguning
-            - Daun mengering
-
-            **Penanganan:**
-            - Gunakan fungisida
-            - Pangkas daun yang terinfeksi
-            - Jaga kelembaban tanaman
-            """)
-
-else:
-    st.info("Silakan upload gambar di sidebar 👈")
-
-# ===== FOOTER =====
+# ==============================================================================
+# FOOTER
+# ==============================================================================
 st.markdown("---")
-st.caption("Project Deteksi Penyakit Daun Tomat 🌿 | Kelompok Kamu")
+st.markdown(
+    "<center><small>🍅 Tomato Shield AI | MobileNetV2 Transfer Learning | Akurasi 82%</small></center>",
+    unsafe_allow_html=True
+)
