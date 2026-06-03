@@ -153,7 +153,7 @@ if uploaded_file is not None:
                 st.error(f"⚠️ **Hasil:** Tanaman terdeteksi **{class_display_names[pred_label]}**")
                 st.info(f"💡 **Rekomendasi:** {class_info[pred_label]}. Segera lakukan tindakan pengendalian.")
             
-            # ========== GRAFIK PROBABILITAS (DIPERBAIKI) ==========
+            # ========== GRAFIK PROBABILITAS ==========
             st.write("")
             st.write("**📈 Probabilitas per Kelas:**")
             
@@ -162,25 +162,7 @@ if uploaded_file is not None:
                 display_name = class_display_names[name]
                 
                 st.markdown(f"🔹 {display_name}: {prob:.1f}%")
-                # PERBAIKAN: konversi ke integer
                 st.progress(int(prob), text=f"{prob:.1f}%")
-            
-            # ========== VISUALISASI PREPROCESSING ==========
-            st.markdown("---")
-            st.subheader("🔬 Visualisasi Hasil Preprocessing")
-            
-            gray = cv2.cvtColor(result["img_resized"], cv2.COLOR_BGR2GRAY)
-            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-            
-            col_v1, col_v2, col_v3 = st.columns(3)
-            with col_v1:
-                st.image(image, caption="Original", use_container_width=True)
-            with col_v2:
-                st.image(result["img_resized"], caption="Resized (128x128)", use_container_width=True)
-            with col_v3:
-                st.image(thresh, caption="Deteksi Bercak (Otsu)", use_container_width=True, clamp=True)
-            
-            st.caption("💡 **Interpretasi:** Area putih pada gambar 'Deteksi Bercak' menunjukkan potensi area penyakit.")
 
 # ==============================================================================
 # FOOTER
