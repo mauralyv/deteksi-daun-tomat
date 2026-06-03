@@ -15,33 +15,12 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS untuk menyembunyikan ikon plus di file_uploader (VERSI BARU)
 st.markdown("""
     <style>
     .main-title { font-size:42px !important; font-weight: bold; color: #E74C3C; text-align: center; margin-bottom: 0px; }
     .subtitle { font-size:18px !important; text-align: center; color: #555555; margin-bottom: 30px; }
     .stButton > button { background-color: #E74C3C; color: white; border-radius: 10px; padding: 10px 24px; }
     .stButton > button:hover { background-color: #c0392b; color: white; }
-    
-    /* Sembunyikan ikon plus di file uploader - Universal selector */
-    button[data-testid="baseButton-secondary"] svg {
-        display: none !important;
-    }
-    
-    /* Sembunyikan ikon plus dari file uploader drag area */
-    div[data-testid="stFileUploaderDropzone"] svg {
-        display: none !important;
-    }
-    
-    /* Sembunyikan semua SVG di dalam file uploader */
-    .stFileUploader svg {
-        display: none !important;
-    }
-    
-    /* Alternative: hide the plus icon specifically */
-    .uploadedFilePath svg {
-        display: none;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -127,25 +106,26 @@ def predict_tomato_disease(img_array, model, img_size=128):
     }
 
 # ==============================================================================
-# UPLOAD GAMBAR (Custom tanpa ikon plus)
+# CUSTOM FILE UPLOADER (TANPA IKON PLUS)
 # ==============================================================================
+
+def custom_file_uploader():
+    # Tampilkan kotak custom dengan CSS
+    st.markdown("""
+    <div style="border: 2px dashed #E74C3C; border-radius: 10px; padding: 30px; text-align: center; margin-bottom: 20px;">
+        <p style="font-size: 40px; margin: 0;">📁</p>
+        <p style="font-size: 16px; margin: 5px 0;"><strong>Klik tombol di bawah untuk memilih gambar</strong></p>
+        <p style="font-size: 12px; color: #888;">atau drag & drop file ke area ini</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # File uploader dengan label kosong (plus tetap ada tapi lebih kecil)
+    # Alternatif: gunakan st.file_uploader dengan label_visibility="collapsed"
+    return st.file_uploader("", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
+
+# Tampilkan custom uploader
 st.subheader("📤 Unggah Gambar Daun Tomat")
-
-# Gunakan columns untuk tata letak yang lebih rapi
-col_up1, col_up2 = st.columns([2, 1])
-
-with col_up1:
-    # File uploader
-    uploaded_file = st.file_uploader(
-        "Pilih gambar dari komputer (JPG, JPEG, PNG):", 
-        type=["jpg", "jpeg", "png"],
-        label_visibility="visible"
-    )
-
-with col_up2:
-    st.write("")
-    st.write("")
-    st.markdown("**ATAU** drag & drop gambar ke area di samping")
+uploaded_file = custom_file_uploader()
 
 if uploaded_file is not None:
     col1, col2 = st.columns(2)
@@ -197,9 +177,8 @@ if uploaded_file is not None:
                 
                 st.markdown(f"🔹 {display_name}: {prob:.1f}%")
                 st.progress(int(prob), text=f"{prob:.1f}%")
-
 else:
-    # Tampilkan informasi jika belum upload
+    # Tampilkan pesan jika belum upload
     st.info("👈 Silakan pilih gambar daun tomat untuk memulai deteksi")
 
 # ==============================================================================
