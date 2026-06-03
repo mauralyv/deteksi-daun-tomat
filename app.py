@@ -3,6 +3,8 @@ import tensorflow as tf
 import cv2
 import numpy as np
 from PIL import Image
+import gdown
+import os
 
 # ==============================================================================
 # KONFIGURASI HALAMAN
@@ -24,12 +26,24 @@ st.markdown('<p class="main-title">🍅 Tomato Shield AI</p>', unsafe_allow_html
 st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
 
 # ==============================================================================
-# LOAD MODEL (SAMA PERSIS DENGAN COLAB)
+# LOAD MODEL DARI GOOGLE DRIVE
 # ==============================================================================
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model('model_daun_tomat_82.h5')
+    model_path = 'model_daun_tomat_82.h5'
+    
+    # Cek apakah model sudah ada di lokal
+    if not os.path.exists(model_path):
+        with st.spinner("📥 Mengunduh model AI (26MB) dari Google Drive, mohon tunggu 1-2 menit..."):
+            # File ID dari link Google Drive Anda
+            file_id = "1jo2bghh6avz9nSPb7zzhslKIe--Y7R-b"
+            url = f"https://drive.google.com/uc?id={file_id}"
+            gdown.download(url, model_path, quiet=False)
+            st.success("✅ Model berhasil diunduh!")
+    
+    return tf.keras.models.load_model(model_path)
 
+# Load model
 with st.spinner("🧠 Sedang menginisialisasi model AI..."):
     model = load_model()
 
@@ -43,13 +57,6 @@ class_display_names = {
     'early_blight': '🟤 Early Blight (Bercak Dini)',
     'late_blight': '⚫ Late Blight (Bercak Lambat)',
     'leaf_mold': '🌫️ Leaf Mold (Kapang Daun)'
-}
-
-class_colors = {
-    'healthy': 'green',
-    'early_blight': '#E67E22',
-    'late_blight': '#8B4513',
-    'leaf_mold': '#A9A9A9'
 }
 
 # ==============================================================================
@@ -166,12 +173,6 @@ if uploaded_file is not None:
             for idx, name in enumerate(class_names):
                 prob_percentage = all_probs[idx] * 100
                 display_name = class_display_names[name]
-                
-                # Warna bar
-                if name == 'healthy':
-                    bar_color = "#2ecc71"
-                else:
-                    bar_color = "#e74c3c"
                 
                 st.markdown(f"🔹 {display_name}: {prob_percentage:.2f}%")
                 st.progress(float(all_probs[idx]), text=f"{prob_percentage:.1f}%")
