@@ -30,13 +30,13 @@ st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbas
 # ==============================================================================
 @st.cache_resource
 def load_model():
-    model_path = 'model_daun_tomat_82.h5'
+    model_path = 'BARU_model_daun_tomat_82.h5'
     
     # Cek apakah model sudah ada di lokal
     if not os.path.exists(model_path):
         with st.spinner("📥 Mengunduh model AI (26MB) dari Google Drive, mohon tunggu 1-2 menit..."):
             # File ID dari link Google Drive Anda
-            file_id = "1jo2bghh6avz9nSPb7zzhslKIe--Y7R-b"
+            file_id = "1_OLt5j1X7cwIh9yI3jqL7RM7MXlJMoz2"
             url = f"https://drive.google.com/uc?id={file_id}"
             gdown.download(url, model_path, quiet=False)
             st.success("✅ Model berhasil diunduh!")
