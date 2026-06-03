@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS untuk menyembunyikan ikon plus di file_uploader (VERSI BARU)
+# CSS untuk menyembunyikan ikon plus di file_uploader
 st.markdown("""
     <style>
     .main-title { font-size:42px !important; font-weight: bold; color: #E74C3C; text-align: center; margin-bottom: 0px; }
@@ -23,24 +23,12 @@ st.markdown("""
     .stButton > button { background-color: #E74C3C; color: white; border-radius: 10px; padding: 10px 24px; }
     .stButton > button:hover { background-color: #c0392b; color: white; }
     
-    /* Sembunyikan ikon plus di file uploader - Universal selector */
-    button[data-testid="baseButton-secondary"] svg {
+    /* Sembunyikan ikon plus di file uploader */
+    .stFileUploader > div > button > svg {
         display: none !important;
     }
-    
-    /* Sembunyikan ikon plus dari file uploader drag area */
-    div[data-testid="stFileUploaderDropzone"] svg {
-        display: none !important;
-    }
-    
-    /* Sembunyikan semua SVG di dalam file uploader */
-    .stFileUploader svg {
-        display: none !important;
-    }
-    
-    /* Alternative: hide the plus icon specifically */
-    .uploadedFilePath svg {
-        display: none;
+    .stFileUploader > div > button > svg + span {
+        margin-left: 0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -127,25 +115,12 @@ def predict_tomato_disease(img_array, model, img_size=128):
     }
 
 # ==============================================================================
-# UPLOAD GAMBAR (Custom tanpa ikon plus)
+# UPLOAD GAMBAR
 # ==============================================================================
-st.subheader("📤 Unggah Gambar Daun Tomat")
-
-# Gunakan columns untuk tata letak yang lebih rapi
-col_up1, col_up2 = st.columns([2, 1])
-
-with col_up1:
-    # File uploader
-    uploaded_file = st.file_uploader(
-        "Pilih gambar dari komputer (JPG, JPEG, PNG):", 
-        type=["jpg", "jpeg", "png"],
-        label_visibility="visible"
-    )
-
-with col_up2:
-    st.write("")
-    st.write("")
-    st.markdown("**ATAU** drag & drop gambar ke area di samping")
+uploaded_file = st.file_uploader(
+    "📤 Unggah foto sampel daun tomat Anda di bawah ini:", 
+    type=["jpg", "jpeg", "png"]
+)
 
 if uploaded_file is not None:
     col1, col2 = st.columns(2)
@@ -197,10 +172,9 @@ if uploaded_file is not None:
                 
                 st.markdown(f"🔹 {display_name}: {prob:.1f}%")
                 st.progress(int(prob), text=f"{prob:.1f}%")
-
-else:
-    # Tampilkan informasi jika belum upload
-    st.info("👈 Silakan pilih gambar daun tomat untuk memulai deteksi")
+            
+            # ========== VISUALISASI PREPROCESSING (jika mau) ==========
+            # Hapus bagian ini jika tidak ingin visualisasi
 
 # ==============================================================================
 # FOOTER
