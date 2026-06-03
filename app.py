@@ -34,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<p class="main-title">🍅 Deteksi Penyakit Daun Tomat</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Sistem Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
 
 # ==============================================================================
 # LOAD MODEL DARI GOOGLE DRIVE
@@ -117,8 +117,13 @@ IMG_SIZE = 128
 with st.sidebar:
     st.header("📌 Informasi Sistem")
     st.markdown("""
-    Aplikasi ini menggunakan **MobileNetV2 (Transfer Learning)** untuk mendeteksi 
-    4 kondisi daun tomat.
+    **Sistem Deteksi Penyakit pada Citra Daun Tomat**
+    
+    Mendeteksi 4 kondisi daun tomat:
+    - Sehat
+    - Yellow Leaf Curl Virus
+    - Late Blight
+    - Leaf Mold
     """)
     
     st.markdown("---")
@@ -223,6 +228,6 @@ if uploaded_file is not None:
 # ==============================================================================
 st.markdown("---")
 st.markdown(
-    "<center><small>🍅 Deteksi Penyakit Daun Tomat | MobileNetV2 Transfer Learning</small></center>",
+    "<center><small>🍅 Deteksi Penyakit Daun Tomat</small></center>",
     unsafe_allow_html=True
 )
