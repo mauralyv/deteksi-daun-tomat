@@ -10,7 +10,7 @@ import os
 # KONFIGURASI HALAMAN
 # ==============================================================================
 st.set_page_config(
-    page_title="Tomato Leaf Disease Detector", 
+    page_title="Deteksi Penyakit Daun Tomat", 
     page_icon="🍅", 
     layout="wide"
 )
@@ -22,7 +22,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<p class="main-title">🍅 Tomato Shield AI</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">🍅 Deteksi Daun Tomat</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Sistem Pakar Deteksi Penyakit Daun Tomat Berbasis Deep Learning</p>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -39,7 +39,6 @@ def load_model():
             file_id = "1E5tsGy0M1kQr9rgvZbuloxPWRWpKFE4i"
             url = f"https://drive.google.com/uc?id={file_id}"
             gdown.download(url, model_path, quiet=False)
-            st.success("✅ Model berhasil diunduh!")
     
     return tf.keras.models.load_model(model_path)
 
@@ -65,11 +64,9 @@ class_display_names = {
 with st.sidebar:
     st.header("📌 Informasi Sistem")
     st.markdown("""
-    Aplikasi ini menggunakan arsitektur **MobileNetV2 (Transfer Learning)** 
-    dengan prapemrosesan **Color-Preserved** untuk mendeteksi 4 kondisi daun tomat.
+    Aplikasi ini menggunakan **MobileNetV2 (Transfer Learning)** untuk mendeteksi 
+    4 kondisi daun tomat.
     """)
-    st.write(f"**Akurasi Pengujian:** 82.00%")
-    st.write(f"**Resolusi Input:** {IMG_SIZE}x{IMG_SIZE} Piksel")
     
     st.markdown("---")
     st.subheader("🌿 Kelas yang Didukung:")
@@ -134,11 +131,11 @@ if uploaded_file is not None:
         
     with col2:
         st.subheader("⚙️ Kontrol Analisis")
-        st.write("Klik tombol di bawah ini untuk mengaktifkan ekstraksi fitur jaringan saraf konvensional:")
+        st.write("Klik tombol di bawah ini untuk mendeteksi penyakit:")
         run_prediction = st.button("🔍 Mulai Deteksi Penyakit", type="primary", use_container_width=True)
     
     if run_prediction:
-        with st.spinner("🤖 AI sedang memindai pola tekstur dan morfologi bercak daun..."):
+        with st.spinner("🤖 AI sedang menganalisis gambar..."):
             
             # Prediksi
             result = predict_tomato_disease(img_bgr, model, IMG_SIZE)
@@ -148,33 +145,33 @@ if uploaded_file is not None:
             
             # ========== TAMPILKAN HASIL ==========
             st.write("---")
-            st.subheader("📊 Laporan Hasil Diagnosa")
+            st.subheader("📊 Hasil Diagnosa")
             
             # Metrik
             m_col1, m_col2 = st.columns(2)
             with m_col1:
                 if pred_label == 'healthy':
-                    st.metric(label="Status Kesehatan Daun", value="✅ SEHAT", delta="Normal")
+                    st.metric(label="Status Daun", value="✅ SEHAT", delta="Normal")
                 else:
-                    st.metric(label="Status Kesehatan Daun", value="⚠️ TERINFEKSI", delta="- Sakit", delta_color="inverse")
+                    st.metric(label="Status Daun", value="⚠️ TERINFEKSI", delta="Sakit", delta_color="inverse")
             with m_col2:
-                st.metric(label="Tingkat Keyakinan", value=f"{confidence:.2f}%")
+                st.metric(label="Keyakinan", value=f"{confidence:.1f}%")
             
             # Banner Status
             if pred_label == 'healthy':
-                st.success(f"**Hasil Analisis:** Tanaman dinyatakan **SEHAT**. Tidak diperlukan tindakan penanganan khusus.")
+                st.success(f"✅ **Hasil:** Tanaman dinyatakan **SEHAT**")
             else:
-                st.error(f"**Hasil Analisis:** Tanaman terdeteksi mengidap **{class_display_names[pred_label]}**. Segera lakukan tindakan pengendalian!")
+                st.error(f"⚠️ **Hasil:** Tanaman terdeteksi **{class_display_names[pred_label]}**")
             
             # ========== GRAFIK PROBABILITAS ==========
             st.write("")
-            st.write("**📈 Distribusi Keyakinan Model untuk Tiap Kelas:**")
+            st.write("**📈 Probabilitas per Kelas:**")
             
             for idx, name in enumerate(class_names):
                 prob_percentage = all_probs[idx] * 100
                 display_name = class_display_names[name]
                 
-                st.markdown(f"🔹 {display_name}: {prob_percentage:.2f}%")
+                st.markdown(f"🔹 {display_name}: {prob_percentage:.1f}%")
                 st.progress(float(all_probs[idx]), text=f"{prob_percentage:.1f}%")
 
 # ==============================================================================
@@ -182,6 +179,6 @@ if uploaded_file is not None:
 # ==============================================================================
 st.markdown("---")
 st.markdown(
-    "<center><small>🍅 Tomato Shield AI | MobileNetV2 Transfer Learning | Akurasi 82%</small></center>",
+    "<center><small>🍅 Deteksi Penyakit Daun Tomat | CNN Transfer Learning</small></center>",
     unsafe_allow_html=True
 )
