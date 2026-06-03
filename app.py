@@ -36,7 +36,7 @@ def load_model():
     if not os.path.exists(model_path):
         with st.spinner("📥 Mengunduh model AI (26MB) dari Google Drive, mohon tunggu 1-2 menit..."):
             # File ID dari link Google Drive Anda
-            file_id = "1_OLt5j1X7cwIh9yI3jqL7RM7MXlJMoz2"
+            file_id = "1E5tsGy0M1kQr9rgvZbuloxPWRWpKFE4i"
             url = f"https://drive.google.com/uc?id={file_id}"
             gdown.download(url, model_path, quiet=False)
             st.success("✅ Model berhasil diunduh!")
